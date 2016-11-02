@@ -1,0 +1,120 @@
+package shared;
+
+import java.io.IOException;
+
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+
+public class UDPMessageSocket
+{ 
+	private DatagramSocket socket;
+	private boolean running;
+	private byte[] signature = new byte[3];
+	private static int HEADER_SIZE = 6;
+	private static int BUFFER_SIZE = 1024;
+	private InetAddress addr;
+	private int door;
+
+	public UDPMessageSocket(int port) throws IOException
+	{
+		socket = new DatagramSocket(port);
+		running = true;
+
+		signature[0] = 77;
+		signature[1] = 71;
+		signature[2] = 83;
+		Thread requestHandler = new Thread(() ->
+		{
+			DatagramPacket packet = new DatagramPacket(new byte[BUFFER_SIZE + HEADER_SIZE], BUFFER_SIZE + 1);
+			while(running)
+			{
+				try
+				{
+					socket.receive(header);
+					byte[] data = packet.getData();
+					System.out.println(data.length);
+					for(int i = 0; i<3; i++)
+						if(data[BUFFER_SIZE + i + 1] != signature[i])
+							throw new IOException("Signatures do not match");
+					String[] fragments = new String[data[3]];
+					for(int i = 0; i<data[3]; i++)
+					{
+						socket.receive(packet);
+						byte[] packetData = packet.getData();
+						fragments[packetData[BUFFER_SIZE + 5]] = new String(packetData);
+					}
+					String message = "";
+					for(int i = 0; i<fragments.length; i++)
+						message += fragments[i];
+					System.out.println(message);
+					// request handling studd
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		});
+		requestHandler.start();
+	}
+
+	public void connect(String ipAddr, int door) throws IOException
+	{
+		// socket.connect(InetAddress.getByName(ipAddr), door);
+		this.addr = InetAddress.getByName(ipAddr);
+		this.door = door;
+		System.out.println("H");
+	}
+
+	public boolean isConnected()
+	{
+		return socket.isConnected(); 
+	}
+
+	public void setSignature(String newSignature)
+	{
+		byte[] bytes = newSignature.getBytes();
+		for(int i = 0; i<this.signature.length; i++)
+			signature[i] = (i < bytes.length) ? bytes[i] : 0;
+	}
+
+	public String getSignature()
+	{
+		return new String(signature);	
+	}
+
+	public void sendMessage(String message) throws IOException
+	{
+		// if(!isConnected())
+		// 	throw new IOException("Socket isn't connected to anyone");
+		// every message will be described an header block
+		// bytes from 0 to 2: signature
+		// bytes 3: number of segment(range from 1 to 255)
+		byte[] bytes = message.getBytes();
+		if(bytes.length == 0)
+			throw new IOException("Given message is empty");
+		else if(Math.ceil((byte)bytes.length / BUFFER_SIZE) > 255)
+			throw new IOException("Given message is too long to be sent");
+		// the message gets divided into 1024 byte long segment and sent
+		// since the messages are not necessarily received in order
+		// a byte is appended(following a terminator byte) to the message, 
+		// which will represent the segment position
+		byte[] packet = new byte[BUFFER_SIZE + HEADER_SIZE];
+		for(int i = 0; i<bytes.length;)
+		{
+			for(int j = 0; j<BUFFER_SIZE; j++)
+			{
+				packet[i % BUFFER_SIZE] = (i < bytes.length) ? bytes[i] : 0;
+				i++;
+			}
+			packet[BUFFER_SIZE] = 0;
+			packet[BUFFER_SIZE + 1] = signature[0];
+			packet[BUFFER_SIZE + 2] = signature[1];
+			packet[BUFFER_SIZE + 3] = signature[2];
+			packet[BUFFER_SIZE + 4] = (byte)Math.ceil((double)bytes.length / BUFFER_SIZE);
+			packet[BUFFER_SIZE + 5] = (byte)(i / BUFFER_SIZE);
+			socket.send(new DatagramPacket(packet, BUFFER_SIZE + 2, addr, door));
+		}
+	}
+}
