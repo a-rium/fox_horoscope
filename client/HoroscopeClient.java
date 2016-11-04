@@ -1,9 +1,13 @@
 package client;
 
-import java.net.DatagramSocket;
-import java.net.DatagramPacket;
+import shared.UDPMessageSocket;
 
-public class HoroscopeClient
+import java.io.IOException;
+
+public class HoroscopeClient extends UDPMessageSocket
 {
-
+	public HoroscopeClient(int port) throws IOException
+	{
+		super(port);
+	}
 }

@@ -3,6 +3,7 @@ package server;
 import java.io.IOException;
 
 import shared.UDPMessageSocket;
+import shared.RequestMessage;
 
 public class Main
 {
@@ -11,18 +12,18 @@ public class Main
 		try
 		{
 			UDPMessageSocket client = new UDPMessageSocket(50000);
-			Server server = new Server(50001);
+			HoroscopeServer server = new HoroscopeServer(50001);
 			client.connect("localhost", 50001);
-			client.sendMessage("quit");	
+			String[] parameters = { "utente" };
+			client.send(new RequestMessage("connect", parameters).getBytes());	
+			client.send(new RequestMessage("upgrade", parameters).getBytes());
+			client.send(new RequestMessage("upgrade", parameters).getBytes());		
+			client.send(new RequestMessage("quit", null).getBytes());	
 
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace(); 
 		}
-		// finally
-		// {
-		// 	System.exit(0);
-		// }
 	}
 }

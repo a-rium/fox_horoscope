@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 
 public class UDPMessageSocket
@@ -15,13 +16,15 @@ public class UDPMessageSocket
 	private static int BUFFER_SIZE = 1024;
 	private InetAddress addr;
 	private int door;
-	private ArrayList<MessageHandler> handlers;
+	private ArrayList<MessageHandler> messageHandlers;
+	private ArrayList<PacketHandler> packetHandlers;
 
 	public UDPMessageSocket(int port) throws IOException
 	{
 		socket = new DatagramSocket(port);
 		running = true;
-		handlers = new ArrayList<MessageHandler>();
+		messageHandlers = new ArrayList<MessageHandler>();
+		packetHandlers = new ArrayList<PacketHandler>();
 		Thread requestHandler = new Thread(() ->
 		{
 			DatagramPacket packet = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
@@ -33,8 +36,10 @@ public class UDPMessageSocket
 					String message = new String(packet.getData()).trim();
 					// applying the trim() method to the newly created String removes all the unused
 					// characters after the terminator
-					for(MessageHandler handler : handlers)
+					for(MessageHandler handler : messageHandlers)
 						handler.messageReceived(message);
+					for(PacketHandler handler : packetHandlers)
+						handler.packetReceived(packet);
 				}
 				catch(IOException e)
 				{
@@ -47,15 +52,19 @@ public class UDPMessageSocket
 
 	public void addMessageHandler(MessageHandler handler)
 	{
-		handlers.add(handler);
+		messageHandlers.add(handler);
 	}
+
+	public void addPacketHandler(PacketHandler handler)
+	{
+		packetHandlers.add(handler);
+	}	
 
 	public void connect(String ipAddr, int door) throws IOException
 	{
 		// socket.connect(InetAddress.getByName(ipAddr), door);
 		this.addr = InetAddress.getByName(ipAddr);
 		this.door = door;
-		System.out.println("H");
 	}
 
 	public boolean isConnected()
@@ -68,6 +77,19 @@ public class UDPMessageSocket
 		running = false;
 		socket.close();
 	}
+
+	public void send(byte[] bytes) throws IOException
+	{
+		if(bytes != null && bytes.length < BUFFER_SIZE)
+			socket.send(new DatagramPacket(Arrays.copyOf(bytes, BUFFER_SIZE), BUFFER_SIZE, addr, door));
+		else
+			throw new IOException("Invalid message, bigger than the buffer");
+	}
+
+	public InetAddress getAddress()
+	{
+		return socket.getLocalAddress();
+	} 
 
 	public void sendMessage(String message) throws IOException
 	{
