@@ -11,14 +11,14 @@ public class Main
 	{
 		try
 		{
-			UDPMessageSocket client = new UDPMessageSocket(50000);
-			HoroscopeServer server = new HoroscopeServer(50001);
-			client.connect("localhost", 50001);
-			String[] parameters = { "utente" };
-			client.send(new RequestMessage("connect", parameters).getBytes());	
-			client.send(new RequestMessage("upgrade", parameters).getBytes());
-			client.send(new RequestMessage("upgrade", parameters).getBytes());		
-			client.send(new RequestMessage("quit", null).getBytes());	
+			// UDPMessageSocket client = new UDPMessageSocket(50000);
+			HoroscopeServer server = new HoroscopeServer(Integer.parseInt(args[0]));
+			// client.connect("localhost", 50001);
+			// String[] parameters = { "utente" };
+			// client.send(new RequestMessage("connect", parameters).getBytes());	
+			// client.send(new RequestMessage("upgrade", parameters).getBytes());
+			// client.send(new RequestMessage("upgrade", parameters).getBytes());		
+			// client.send(new RequestMessage("quit", null).getBytes());	
 
 		}
 		catch(IOException e)

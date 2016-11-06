@@ -9,19 +9,18 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.ArrayList;
 
-public class UDPMessageSocket
+public class UDPMessageSocket extends DatagramSocket
 { 
-	private DatagramSocket socket;
 	private boolean running;
 	private static int BUFFER_SIZE = 1024;
-	private InetAddress addr;
-	private int door;
+	private String ipAddr;
+	private int port;
 	private ArrayList<MessageHandler> messageHandlers;
 	private ArrayList<PacketHandler> packetHandlers;
 
 	public UDPMessageSocket(int port) throws IOException
 	{
-		socket = new DatagramSocket(port);
+		super(port);
 		running = true;
 		messageHandlers = new ArrayList<MessageHandler>();
 		packetHandlers = new ArrayList<PacketHandler>();
@@ -32,7 +31,7 @@ public class UDPMessageSocket
 			{
 				try
 				{
-					socket.receive(packet);
+					this.receive(packet);
 					String message = new String(packet.getData()).trim();
 					// applying the trim() method to the newly created String removes all the unused
 					// characters after the terminator
@@ -60,38 +59,33 @@ public class UDPMessageSocket
 		packetHandlers.add(handler);
 	}	
 
-	public void connect(String ipAddr, int door) throws IOException
+	public void connect(String ipAddr, int port) throws IOException
 	{
-		// socket.connect(InetAddress.getByName(ipAddr), door);
-		this.addr = InetAddress.getByName(ipAddr);
-		this.door = door;
+		this.ipAddr = ipAddr;
+		this.port = port;
 	}
 
-	public boolean isConnected()
-	{
-		return socket.isConnected(); 
-	}
-
-	public void close() throws IOException
+	public void close()
 	{
 		running = false;
-		socket.close();
+		super.close();
 	}
 
-	public void send(byte[] bytes) throws IOException
+	public void send(byte[] bytes, String ipAddr, int port) throws IOException
 	{
 		if(bytes != null && bytes.length < BUFFER_SIZE)
-			socket.send(new DatagramPacket(Arrays.copyOf(bytes, BUFFER_SIZE), BUFFER_SIZE, addr, door));
+			super.send(new DatagramPacket(Arrays.copyOf(bytes, BUFFER_SIZE), BUFFER_SIZE, 
+				InetAddress.getByName(ipAddr), port));
 		else
 			throw new IOException("Invalid message, bigger than the buffer");
 	}
 
-	public InetAddress getAddress()
+	public void send(byte[] bytes) throws IOException
 	{
-		return socket.getLocalAddress();
-	} 
+		send(bytes, this.ipAddr, this.port);
+	}
 
-	public void sendMessage(String message) throws IOException
+	public void sendMessage(String message, String ipAddr, int port) throws IOException
 	{
 		// if(!isConnected())
 		// 	throw new IOException("Socket isn't connected to anyone");
@@ -110,6 +104,26 @@ public class UDPMessageSocket
 		// since the messages are not necessarily received in order
 		// a byte is appended(following a terminator byte) to the message, 
 		// which will represent the segment position
-		socket.send(new DatagramPacket(packet, BUFFER_SIZE, addr, door));
+		super.send(new DatagramPacket(packet, BUFFER_SIZE, InetAddress.getByName(ipAddr), port));
 	}
+
+	public void sendMessage(String message) throws IOException
+	{
+		sendMessage(message, this.ipAddr, this.port);
+	}
+
+	public DatagramPacket receive() throws IOException
+	{
+		DatagramPacket response = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
+		super.receive(response);
+		return response;
+	}
+
+	public String receiveMessage() throws IOException
+	{
+		DatagramPacket response = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
+		super.receive(response);
+		return new String(response.getData()).trim();
+	}
+
 }

@@ -5,7 +5,10 @@ import shared.RequestMessage;
 import shared.InvalidMessageException;
 
 import java.net.DatagramPacket;
+import java.net.URL;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
 
 import java.util.HashMap;
@@ -31,6 +34,10 @@ public class HoroscopeServer extends UDPMessageSocket
 						System.out.printf("New user: %s\n", username);
 						clients.put(username, 5);
 					}
+					String[] parameters = { "" + clients.get(username) };
+					System.out.println("Sending info...");
+					send(new RequestMessage("connect", parameters).getBytes(), 
+						packet.getAddress().getHostAddress(), packet.getPort());
 				}
 				else if(message.equals("upgrade"))
 				{
@@ -46,13 +53,30 @@ public class HoroscopeServer extends UDPMessageSocket
 						}
 					}
 				}
+				else if(message.equals("date"))
+				{
+					URL generatorWebSite = new URL("http://www.polygen.org/it/grammatiche/rubriche/ita/oroscopo.grm");
+					BufferedReader in = new BufferedReader(new InputStreamReader(generatorWebSite.openStream()));
+					String content = "";
+					String line;
+					while((line = in.readLine()) != null)
+						content += line;
+					String toFind = "<div class=\"generation\">";
+					int start = content.indexOf(toFind) + toFind.length();
+					toFind = "</div>";
+					int end = content.indexOf(toFind, start) + toFind.length();
+					System.out.println(end - start);
+					String horoscopeParagraph = "<html>" + content.substring(start, end) + "</html>";
+					sendMessage(horoscopeParagraph, packet.getAddress().getHostAddress(), packet.getPort());
+					System.out.println("Paragraph sent");
+				}
 				else if(message.equals("quit"))
 				{
 					System.out.println("Disconnecting...");
 					System.exit(0);
 				}
 			}
-			catch(InvalidMessageException ie)
+			catch(IOException ie)
 			{
 				ie.printStackTrace();
 			}
