@@ -102,7 +102,7 @@ public class HoroscopeGUI extends JFrame
 								"Error", JOptionPane.ERROR_MESSAGE);		
 						if(availableHoroscopes == 0)
 							JOptionPane.showMessageDialog(null, "You cannot request an horoscope anymore." + 
-								" To get more, update to a premium account!" + year, "Info", JOptionPane.INFORMATION_MESSAGE);		
+								" To get more, update to a premium account!", "Info", JOptionPane.INFORMATION_MESSAGE);		
 						else
 						{
 							try
@@ -137,7 +137,7 @@ public class HoroscopeGUI extends JFrame
 		buttonPanel.add(new JLabel());
 		inputPanel.add(dataPanel);
 		inputPanel.add(buttonPanel);
-		// horoscopeArea.setEditable(false);
+		horoscopeArea.setEditable(false);
 		mainPanel.add(inputPanel);
 		mainPanel.add(horoscopeArea);
 		add(mainPanel);

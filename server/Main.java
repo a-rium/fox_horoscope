@@ -12,7 +12,7 @@ public class Main
 		try
 		{
 			// UDPMessageSocket client = new UDPMessageSocket(50000);
-			HoroscopeServer server = new HoroscopeServer(Integer.parseInt(args[0]));
+			HoroscopeServer server = new HoroscopeServer(args.length > 0 ? Integer.parseInt(args[0]) : 50000);
 			// client.connect("localhost", 50001);
 			// String[] parameters = { "utente" };
 			// client.send(new RequestMessage("connect", parameters).getBytes());	
