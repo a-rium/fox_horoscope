@@ -35,7 +35,7 @@ public class HoroscopeServer extends UDPMessageSocket
 						clients.put(username, 5);
 					}
 					String[] parameters = { "" + clients.get(username) };
-					System.out.println("Sending info...");
+					System.out.printf("Sending info to: IP: " + packet.getAddress().getHostAddress() + " Porta: " + packet.getPort() + "...");
 					send(new RequestMessage("connect", parameters).getBytes(), 
 						packet.getAddress().getHostAddress(), packet.getPort());
 				}

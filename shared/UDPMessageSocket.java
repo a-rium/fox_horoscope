@@ -126,4 +126,8 @@ public class UDPMessageSocket extends DatagramSocket
 		return new String(response.getData()).trim();
 	}
 
+	public void disableAutoReceive()
+	{
+		running = false;
+	}
 }

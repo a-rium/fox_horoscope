@@ -38,6 +38,7 @@ public class HoroscopeGUI extends JFrame
 		try
 		{
 			client = new UDPMessageSocket(DEFAULT_DOOR);
+			client.disableAutoReceive();
 			String[] parameters = { username };
 			client.send(new RequestMessage("connect", parameters).getBytes(), ipAddr, port);
 			client.setSoTimeout(5000);
