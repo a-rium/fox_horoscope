@@ -2,6 +2,7 @@ package client;
 
 import shared.RequestMessage;
 import shared.UDPMessageSocket;
+import shared.InvalidMessageException;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -35,35 +36,49 @@ public class HoroscopeGUI extends JFrame
 	public HoroscopeGUI(String username, String ipAddr, int port)
 	{
 		super("FoxHoroscope - Logged as " + username);
+		JTextPane horoscopeArea = new JTextPane();
 		try
 		{
 			client = new UDPMessageSocket(DEFAULT_DOOR);
-			client.disableAutoReceive();
 			String[] parameters = { username };
-			client.send(new RequestMessage("connect", parameters).getBytes(), ipAddr, port);
-			client.setSoTimeout(5000);
-			DatagramPacket responsePacket = client.receive();
-			// client.setSoTimeout(0);
-			RequestMessage response = new RequestMessage(responsePacket.getData());
-			if(!response.getRequest().equals("connect"))
+			// function that will handle all the received packet
+			client.addPacketHandler((DatagramPacket packet) ->
 			{
-				JOptionPane.showMessageDialog(null, "An error has occurred while attempting to contact the server", "Error", JOptionPane.ERROR_MESSAGE);
-				System.exit(-1);
-			}
-			availableHoroscopes = Integer.parseInt(response.getParameter(0));
-			client.connect(ipAddr, port);
-
+				try
+				{
+					RequestMessage response = new RequestMessage(packet.getData());
+					if(response.getRequest().equals("connect"))
+					{
+						availableHoroscopes = Integer.parseInt(response.getParameter(0));
+						client.connect(ipAddr, port);
+					}
+					else if(!client.isConnected())
+					{
+						JOptionPane.showMessageDialog(null, "An error has occurred while attempting to contact the server", "Error", JOptionPane.ERROR_MESSAGE);
+						System.exit(-1);
+					}
+				}
+				catch(InvalidMessageException ime)
+				{
+					String paragraph = new String(packet.getData()).trim();
+					horoscopeArea.setText(paragraph);
+					availableHoroscopes--;
+				}
+				catch(IOException ie) {}
+			});
+			client.setSoTimeout(5000);
+			client.send(new RequestMessage("connect", parameters).getBytes(), ipAddr, port);
 		}
 		catch(IOException ie)
 		{
-			JOptionPane.showMessageDialog(null, "An error has occurred while attempting to contact the server", "Error", JOptionPane.ERROR_MESSAGE);
-			ie.printStackTrace();
+			JOptionPane.showMessageDialog(null, "An error has occurred while attempting to contact the server", 
+				"Error", JOptionPane.ERROR_MESSAGE);
 			System.exit(-1);
 		}
 
 		Border etchedBorder = BorderFactory.createEtchedBorder();
 		JPanel mainPanel = new JPanel();
-		JTextPane horoscopeArea = new JTextPane();
+
 		horoscopeArea.setContentType("text/html");
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		JPanel inputPanel = new JPanel(new GridLayout(2, 1));
@@ -101,7 +116,7 @@ public class HoroscopeGUI extends JFrame
 						if(year < 1900)
 							JOptionPane.showMessageDialog(null, "Invalid year(number is less than 1900): " + year, 
 								"Error", JOptionPane.ERROR_MESSAGE);		
-						if(availableHoroscopes == 0)
+						else if(availableHoroscopes == 0)
 							JOptionPane.showMessageDialog(null, "You cannot request an horoscope anymore." + 
 								" To get more, update to a premium account!", "Info", JOptionPane.INFORMATION_MESSAGE);		
 						else
@@ -110,14 +125,8 @@ public class HoroscopeGUI extends JFrame
 							{
 								String[] parameters = { day + "/" + month + "/" + year };
 								client.send(new RequestMessage("date", parameters).getBytes());
-								String paragraph = client.receiveMessage();
-								System.out.println(paragraph);
-								horoscopeArea.setText(paragraph);
-								revalidate();
-								repaint();
 							}
-							catch(IOException i){}
-							availableHoroscopes--;
+							catch(IOException i) {}
 						}
 					}
 					catch(NumberFormatException nfe)

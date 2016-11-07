@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class UDPMessageSocket extends DatagramSocket
 					for(PacketHandler handler : packetHandlers)
 						handler.packetReceived(packet);
 				}
+				catch(SocketTimeoutException ste) { }
 				catch(IOException e)
 				{
 					e.printStackTrace();
