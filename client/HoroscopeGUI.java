@@ -16,7 +16,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.JSeparator;
 import javax.swing.JOptionPane;
+import javax.swing.SwingConstants;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
 
@@ -26,6 +28,8 @@ import javax.swing.border.TitledBorder;
 import java.net.DatagramPacket;
 
 import java.io.IOException;
+
+import java.util.ArrayList;
 
 public class HoroscopeGUI extends JFrame
 {
@@ -37,11 +41,11 @@ public class HoroscopeGUI extends JFrame
 	{
 		super("FoxHoroscope - Logged as " + username);
 		JTextPane horoscopeArea = new JTextPane();
+		horoscopeArea.setEditable(false);
 		try
 		{
 			client = new UDPMessageSocket(DEFAULT_DOOR);
 			String[] parameters = { username };
-			// function that will handle all the received packet
 			client.addPacketHandler((DatagramPacket packet) ->
 			{
 				try
@@ -66,7 +70,7 @@ public class HoroscopeGUI extends JFrame
 				}
 				catch(IOException ie) {}
 			});
-			client.setSoTimeout(5000);
+			// client.setSoTimeout(5000);
 			client.send(new RequestMessage("connect", parameters).getBytes(), ipAddr, port);
 		}
 		catch(IOException ie)
@@ -78,9 +82,9 @@ public class HoroscopeGUI extends JFrame
 
 		Border etchedBorder = BorderFactory.createEtchedBorder();
 		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 
 		horoscopeArea.setContentType("text/html");
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 		JPanel inputPanel = new JPanel(new GridLayout(2, 1));
 		inputPanel.setBorder(new TitledBorder(etchedBorder, "Dati utente"));
 		JPanel dataPanel = new JPanel(new FlowLayout());
@@ -89,34 +93,37 @@ public class HoroscopeGUI extends JFrame
 					   		 "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"};
 		String[] months = {"--", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
 							   "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"};
+		ArrayList<String> yearsList = new ArrayList<String>();
+		yearsList.add("--");
+		for(int year = 2016; year >= 1900; year--)
+			yearsList.add(Integer.toString(year));
+		String[] years = yearsList.toArray(days);
 		JComboBox<String> dayBox = new JComboBox<String>(days);
 		dayBox.setSelectedIndex(0);
 		JComboBox<String> monthBox = new JComboBox<String>(months);
 		monthBox.setSelectedIndex(0);
-		JTextField yearField = new JTextField("", 4);
+		JComboBox yearBox= new JComboBox<String>(years);
+		yearBox.setSelectedIndex(0);
 		dataPanel.add(dayBox);
 		dataPanel.add(new JLabel("/"));
 		dataPanel.add(monthBox);
 		dataPanel.add(new JLabel("/"));
-		dataPanel.add(yearField);
+		dataPanel.add(yearBox);
 		JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
 		JButton sendButton = new JButton("Richiedi");
 		sendButton.addActionListener((ActionEvent e) ->
 		{
 			int day = dayBox.getSelectedIndex();
 			int month = monthBox.getSelectedIndex();
-			if(day > 0 && month > 0)
+			int year = yearBox.getSelectedIndex();
+			if(day > 0 && month > 0 && year > 0)
 			{
 				if((month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 11) ||
 					(month == 2 && day < 29) || ((month == 4 || month == 6 || month == 9 || month == 11) && day < 31))
 				{
 					try
 					{
-						int year = Integer.parseInt(yearField.getText());
-						if(year < 1900)
-							JOptionPane.showMessageDialog(null, "Invalid year(number is less than 1900): " + year, 
-								"Error", JOptionPane.ERROR_MESSAGE);		
-						else if(availableHoroscopes == 0)
+						if(availableHoroscopes < 0)
 							JOptionPane.showMessageDialog(null, "You cannot request an horoscope anymore." + 
 								" To get more, update to a premium account!", "Info", JOptionPane.INFORMATION_MESSAGE);		
 						else
@@ -147,8 +154,26 @@ public class HoroscopeGUI extends JFrame
 		buttonPanel.add(new JLabel());
 		inputPanel.add(dataPanel);
 		inputPanel.add(buttonPanel);
-		horoscopeArea.setEditable(false);
+		JPanel premiumPanel = new JPanel(new GridLayout(1, 3));
+		premiumPanel.setBorder(new TitledBorder(etchedBorder, "Opzioni Premium", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.CENTER));
+		JButton premiumButton = new JButton("Diventa utente premium!");
+		premiumButton.addActionListener((ActionEvent e) ->
+		{
+			String email = JOptionPane.showInputDialog(null, "Inserisci l'email legata al tuo account PayPal: ", "PAGAH", JOptionPane.QUESTION_MESSAGE);
+			if(email.matches("\\w+@\\w+.\\w+"))
+			{
+				JOptionPane.showMessageDialog(null, "Congratulazioni! Il tuo account e' adesso premium. Potrai richiedere un numero illimjitato di oroscopi.", "Pagamento effetuato", JOptionPane.INFORMATION_MESSAGE);
+				availableHoroscopes = -1;
+				premiumButton.setEnabled(false);
+			}
+			else
+				JOptionPane.showMessageDialog(null, "ERRORE! L'email inserita non e' valida.", "Errore pagamento", JOptionPane.ERROR_MESSAGE);
+		});
+		premiumPanel.add(new JLabel());
+		premiumPanel.add(premiumButton);
+		premiumPanel.add(new JLabel());
 		mainPanel.add(inputPanel);
+		mainPanel.add(premiumPanel);
 		mainPanel.add(horoscopeArea);
 		add(mainPanel);
 		setSize(new Dimension(360, 600));

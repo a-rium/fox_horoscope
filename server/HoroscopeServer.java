@@ -62,7 +62,10 @@ public class HoroscopeServer extends UDPMessageSocket
 					while((line = in.readLine()) != null)
 						content += line;
 					String toFind = "<div class=\"generation\">";
-					int start = content.indexOf(toFind) + toFind.length();
+					int start = content.indexOf(toFind);
+					toFind = "<br>";
+					start = content.indexOf(toFind, start) + toFind.length();
+					start = content.indexOf(toFind, start) + toFind.length();
 					toFind = "</div>";
 					int end = content.indexOf(toFind, start) + toFind.length();
 					System.out.println(end - start);
