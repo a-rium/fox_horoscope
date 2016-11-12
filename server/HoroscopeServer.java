@@ -9,6 +9,11 @@ import java.net.URL;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.IOException;
 
 import java.util.HashMap;
@@ -20,6 +25,26 @@ public class HoroscopeServer extends UDPMessageSocket
 	public HoroscopeServer(int port) throws IOException
 	{
 		super(port);
+		File explorer = new File("connections.data");
+		if(explorer.exists())
+		{
+			try
+			{
+				ObjectInputStream in = new ObjectInputStream(new FileInputStream(explorer));
+				clients = (HashMap<String, Integer>) in.readObject();
+				in.close();
+				System.out.println("Loading archive...");
+				for(String name : clients.keySet())
+					System.out.printf("\tUser: %s Occorrenze: %d\n", name, clients.get(name));
+				System.out.println("Archive loaded!");
+			}
+			catch(IOException | ClassNotFoundException | ClassCastException i)
+			{
+				clients = new HashMap<String, Integer>();
+			}
+		}
+		else
+			clients = new HashMap<String, Integer>();
 		this.addPacketHandler((DatagramPacket packet) ->
 		{
 			try
@@ -68,10 +93,14 @@ public class HoroscopeServer extends UDPMessageSocket
 					start = content.indexOf(toFind, start) + toFind.length();
 					toFind = "</div>";
 					int end = content.indexOf(toFind, start) + toFind.length();
-					System.out.println(end - start);
+					System.out.println("Paragraph length: " + (end - start));
 					String horoscopeParagraph = "<html>" + content.substring(start, end) + "</html>";
 					sendMessage(horoscopeParagraph, packet.getAddress().getHostAddress(), packet.getPort());
 					System.out.println("Paragraph sent");
+					int availableHoroscopes = clients.get(request.getParameter(0));
+					if(availableHoroscopes > 0)
+						clients.put(request.getParameter(0), availableHoroscopes - 1);
+
 				}
 				else if(message.equals("quit"))
 				{
@@ -84,6 +113,17 @@ public class HoroscopeServer extends UDPMessageSocket
 				ie.printStackTrace();
 			}
 		});
-		clients = new HashMap<String, Integer>();
+	}
+
+	public void close()
+	{
+		super.close();
+		try
+		{
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("connections.data"));
+			out.writeObject(clients);
+			out.close();
+		}
+		catch(IOException i) {}
 	}
 }
