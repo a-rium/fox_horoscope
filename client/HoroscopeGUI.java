@@ -60,7 +60,10 @@ public class HoroscopeGUI extends JFrame
 					{
 						availableHoroscopes = Integer.parseInt(response.getParameter(0));
 						client.connect(ipAddr, port);
-						availableHoroscopeLabel.setText("Hai ancora " + availableHoroscopes + " oroscopi a disposizione");
+						if(availableHoroscopes > -1)
+							availableHoroscopeLabel.setText("Hai ancora " + availableHoroscopes + " oroscopi a disposizione");
+						else
+							availableHoroscopeLabel.setText("Utente premium: numero illimitato di oroscopi");
 					}
 					else if(!client.isConnected())
 					{
