@@ -30,6 +30,7 @@ import javax.swing.ImageIcon;
 
 import java.net.DatagramPacket;
 import java.net.URL;
+import java.net.SocketTimeoutException;
 
 import java.io.IOException;
 
@@ -50,7 +51,9 @@ public class HoroscopeGUI extends JFrame
 		try
 		{
 			client = new UDPMessageSocket(DEFAULT_DOOR);
+			client.setSoTimeout(5000);
 			String[] parameters = { username };
+			client.setSoTimeout(5000);
 			client.addPacketHandler((DatagramPacket packet) ->
 			{
 				try
@@ -64,6 +67,8 @@ public class HoroscopeGUI extends JFrame
 							availableHoroscopeLabel.setText("Hai ancora " + availableHoroscopes + " oroscopi a disposizione");
 						else
 							availableHoroscopeLabel.setText("Utente premium: numero illimitato di oroscopi");
+						setVisible(true);
+						client.setSoTimeout(5000);
 					}
 					else if(!client.isConnected())
 					{
@@ -83,7 +88,12 @@ public class HoroscopeGUI extends JFrame
 				}
 				catch(IOException ie) {}
 			});
-			// client.setSoTimeout(5000);
+			client.addTimeoutHandler((SocketTimeoutException ste) ->
+			{
+				JOptionPane.showMessageDialog(null, "E' accaduto un errore durante la connessione al server", 
+					"Error", JOptionPane.ERROR_MESSAGE);
+				System.exit(-1);
+			});
 			client.send(new RequestMessage("connect", parameters).getBytes(), ipAddr, port);
 		}
 		catch(IOException ie)

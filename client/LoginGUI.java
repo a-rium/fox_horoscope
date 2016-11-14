@@ -32,14 +32,11 @@ public class LoginGUI extends JFrame
 	{
 		super("FoxHoroscope - Login");
 		JPanel mainPanel = new JPanel(new BorderLayout());
-		JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+		JPanel inputPanel = new JPanel(new GridLayout(2, 2));
 		Border etchedBorder = BorderFactory.createEtchedBorder();
 		inputPanel.setBorder(new TitledBorder(etchedBorder, "Login"));
-		JTextField usernameField = new JTextField("utente");
 		JTextField ipField = new JTextField("localhost");
 		JTextField portField = new JTextField("50000");
-		inputPanel.add(new JLabel("Scegli un username:", SwingConstants.RIGHT));
-		inputPanel.add(usernameField);
 		inputPanel.add(new JLabel("Server IP:", SwingConstants.RIGHT));
 		inputPanel.add(ipField);
 		inputPanel.add(new JLabel("Porta server:", SwingConstants.RIGHT));
@@ -49,14 +46,21 @@ public class LoginGUI extends JFrame
 		{
 			try
 			{
+				String username;
+				while(true)
+				{
+					username = JOptionPane.showInputDialog(null, "Inserisci il tuo username:", "Username", JOptionPane.QUESTION_MESSAGE);
+					if(username.matches("\\w+"))
+						break;
+					JOptionPane.showMessageDialog(null, "Hello Hello", "Errore", JOptionPane.ERROR_MESSAGE);
+				}
 				int port = Integer.parseInt(portField.getText());
 				try
 				{
 					String ipAddr = ipField.getText();
 					InetAddress.getByName(ipAddr);
-					new HoroscopeGUI(usernameField.getText(), ipAddr, port);
+					new HoroscopeGUI(username, ipAddr, port);
 					PrintWriter writer = new PrintWriter(new FileWriter("user.conf"));
-					writer.printf("%s\n", usernameField.getText());
 					writer.printf("%s\n", ipAddr);
 					writer.printf("%d", port);
 					writer.close();
@@ -94,11 +98,9 @@ public class LoginGUI extends JFrame
 			try
 			{
 				BufferedReader reader = new BufferedReader(new FileReader(explorer));
-				usernameField.setText(reader.readLine().trim());
 				ipField.setText(reader.readLine().trim());
 				portField.setText(reader.readLine().trim());
-				mainPanel.add(new JLabel("<html><center>File di configurazione trovato." + 
-					"<br>Username: " + usernameField.getText() + 
+				mainPanel.add(new JLabel("<html><center>File di configurazione trovato." +  
 					"<br>Server IP: " + ipField.getText() + 
 					"<br>Porta server: " + portField.getText() + 
 					"</center></html>", SwingConstants.CENTER), BorderLayout.CENTER);

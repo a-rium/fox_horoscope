@@ -19,6 +19,7 @@ public class UDPMessageSocket extends DatagramSocket
 	private int port;
 	private ArrayList<MessageHandler> messageHandlers;
 	private ArrayList<PacketHandler> packetHandlers;
+	private ArrayList<TimeoutHandler> timeoutHandlers;
 
 	public UDPMessageSocket(int port) throws IOException
 	{
@@ -26,6 +27,7 @@ public class UDPMessageSocket extends DatagramSocket
 		running = true;
 		messageHandlers = new ArrayList<MessageHandler>();
 		packetHandlers = new ArrayList<PacketHandler>();
+		timeoutHandlers = new ArrayList<TimeoutHandler>();
 		Thread requestHandler = new Thread(() ->
 		{
 			DatagramPacket packet = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
@@ -42,7 +44,11 @@ public class UDPMessageSocket extends DatagramSocket
 					for(PacketHandler handler : packetHandlers)
 						handler.packetReceived(packet);
 				}
-				catch(SocketTimeoutException ste) { }
+				catch(SocketTimeoutException ste)
+				{
+					for(TimeoutHandler handler : timeoutHandlers)
+						handler.handle(ste);
+				}
 				catch(SocketException ste) { }
 				catch(IOException e)
 				{
@@ -62,6 +68,11 @@ public class UDPMessageSocket extends DatagramSocket
 	{
 		packetHandlers.add(handler);
 	}	
+	
+	public void addTimeoutHandler(TimeoutHandler handler)
+	{
+		timeoutHandlers.add(handler);
+	}
 
 	public void connect(String ipAddr, int port) throws IOException
 	{
