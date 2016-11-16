@@ -53,8 +53,8 @@ public class HoroscopeGUI extends JFrame
 		horoscopeArea.setEditable(false);
 		horoscopeArea.setContentType("text/html");
 
-		JPanel inputPanel = new JPanel(new GridLayout(2, 1));
-		inputPanel.setBorder(new TitledBorder(etchedBorder, "Dati utente"));
+		JPanel dataInputPanel = new JPanel(new GridLayout(2, 1));
+		dataInputPanel.setBorder(new TitledBorder(etchedBorder, "Richiedi per data di nascita"));
 
 		JPanel dataPanel = new JPanel(new FlowLayout());
 		String[] days = {"--", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
@@ -81,10 +81,10 @@ public class HoroscopeGUI extends JFrame
 		dataPanel.add(new JLabel("/"));
 		dataPanel.add(yearBox);
 
-		JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
+		JPanel dataButtonPanel = new JPanel(new GridLayout(1, 3));
 
-		JButton sendButton = new JButton("Richiedi");
-		sendButton.addActionListener((ActionEvent e) ->
+		JButton sendDataButton = new JButton("Richiedi");
+		sendDataButton.addActionListener((ActionEvent e) ->
 		{
 			int day = dayBox.getSelectedIndex();
 			int month = monthBox.getSelectedIndex();
@@ -104,7 +104,7 @@ public class HoroscopeGUI extends JFrame
 							try
 							{
 								String[] parameters = { username, day + "/" + month + "/" + year };
-								client.send(new RequestMessage("date", parameters).getBytes());
+								client.send(new RequestMessage("data", parameters).getBytes());
 							}
 							catch(IOException i) {}
 						}
@@ -122,16 +122,50 @@ public class HoroscopeGUI extends JFrame
 			else
 				JOptionPane.showMessageDialog(null, "Devi selezionare una data", "Info", JOptionPane.INFORMATION_MESSAGE);
 		});
-		buttonPanel.add(new JLabel());
-		buttonPanel.add(sendButton);
-		buttonPanel.add(new JLabel());
+		dataButtonPanel.add(new JLabel());
+		dataButtonPanel.add(sendDataButton);
+		dataButtonPanel.add(new JLabel());
 
-		inputPanel.add(dataPanel);
-		inputPanel.add(buttonPanel);
+		dataInputPanel.add(dataPanel);
+		dataInputPanel.add(dataButtonPanel);
+
+		JPanel signInputPanel = new JPanel(new GridLayout(2, 1));
+		signInputPanel.setBorder(new TitledBorder(etchedBorder, "Richiedi per segno zodiacale"));
 		
-		JPanel infoPanel = new JPanel();
+		JPanel signPanel = new JPanel(new FlowLayout());
+		String[] zodiacalSign = { "--", "Ariete", "Toro", "Gemelli", "Cancro", "Leone", "Vergine", 
+						"Bilancia", "Scorpione", "Sagittario", "Capricorno", "Acquario", "Pesci" };
+		JComboBox<String> zodiacalBox = new JComboBox<String>(zodiacalSign);
 
-		// "Hai ancora " + availableHoroscopes + " oroscopi a disposizione"
+		signPanel.add(new JLabel("Segno zodiacale:"));
+		signPanel.add(zodiacalBox);
+
+		JButton sendSignButton = new JButton("Richiedi");
+		sendSignButton.addActionListener((ActionEvent e) ->
+		{
+			int chosenSignIndex = zodiacalBox.getSelectedIndex();
+			if(chosenSignIndex > 0)
+			{
+				try
+				{
+					String[] parameters = { username, zodiacalSign[chosenSignIndex] };
+					client.send(new RequestMessage("data", parameters).getBytes());
+				}
+				catch(IOException i) {}
+			}
+			else
+				JOptionPane.showMessageDialog(null, "Devi selezionare un segno zodiacale", "Info", JOptionPane.INFORMATION_MESSAGE);
+		});
+		JPanel signButtonPanel = new JPanel(new GridLayout(1, 3));
+
+		signButtonPanel.add(new JLabel());
+		signButtonPanel.add(sendSignButton);
+		signButtonPanel.add(new JLabel());
+
+		signInputPanel.add(signPanel);
+		signInputPanel.add(signButtonPanel);
+
+		JPanel infoPanel = new JPanel();
 
 		JLabel availableHoroscopeLabel = new JLabel();
 		infoPanel.add(availableHoroscopeLabel);
@@ -167,7 +201,8 @@ public class HoroscopeGUI extends JFrame
 		premiumPanel.add(premiumButton);
 		premiumPanel.add(logoLabel);
 
-		mainPanel.add(inputPanel);
+		mainPanel.add(dataInputPanel);
+		mainPanel.add(signInputPanel);
 		mainPanel.add(infoPanel);
 		mainPanel.add(premiumPanel);
 		mainPanel.add(horoscopeArea);

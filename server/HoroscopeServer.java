@@ -79,7 +79,7 @@ public class HoroscopeServer extends UDPMessageSocket
 						}
 					}
 				}
-				else if(message.equals("date"))
+				else if(message.equals("data"))
 				{
 					URL generatorWebSite = new URL("http://www.polygen.org/it/grammatiche/rubriche/ita/oroscopo.grm");
 					BufferedReader in = new BufferedReader(new InputStreamReader(generatorWebSite.openStream()));
