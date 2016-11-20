@@ -182,21 +182,24 @@ public class HoroscopeGUI extends JFrame
 		premiumButton.addActionListener((ActionEvent e) ->
 		{
 			String email = JOptionPane.showInputDialog(null, "Inserisci l'email legata al tuo account PayPal: ", "PAGAH", JOptionPane.QUESTION_MESSAGE);
-			if(email.matches("\\w+@\\w+.\\w+"))
+			if(email != null)
 			{
-				JOptionPane.showMessageDialog(null, "Congratulazioni! Il tuo account e' adesso premium. Potrai richiedere un numero illimjitato di oroscopi.", "Pagamento effetuato", JOptionPane.INFORMATION_MESSAGE);
-				availableHoroscopes = -1;
-				availableHoroscopeLabel.setText("Utente premium: numero illimitato di oroscopi");
-				premiumButton.setEnabled(false);
-				try
+				if(email.matches("\\w+@\\w+.\\w+"))
 				{
-					String[] parameters = { username };
-					client.send(new RequestMessage("upgrade", parameters).getBytes());
+					JOptionPane.showMessageDialog(null, "Congratulazioni! Il tuo account e' adesso premium. Potrai richiedere un numero illimjitato di oroscopi.", "Pagamento effetuato", JOptionPane.INFORMATION_MESSAGE);
+					availableHoroscopes = -1;
+					availableHoroscopeLabel.setText("Utente premium: numero illimitato di oroscopi");
+					premiumButton.setEnabled(false);
+					try
+					{
+						String[] parameters = { username };
+						client.send(new RequestMessage("upgrade", parameters).getBytes());
+					}
+					catch(IOException i) {}
 				}
-				catch(IOException i) {}
+				else
+					JOptionPane.showMessageDialog(null, "ERRORE! L'email inserita non e' valida.", "Errore pagamento", JOptionPane.ERROR_MESSAGE);
 			}
-			else
-				JOptionPane.showMessageDialog(null, "ERRORE! L'email inserita non e' valida.", "Errore pagamento", JOptionPane.ERROR_MESSAGE);
 		});
 		premiumPanel.add(premiumButton);
 		premiumPanel.add(logoLabel);
@@ -225,7 +228,10 @@ public class HoroscopeGUI extends JFrame
 						if(availableHoroscopes > -1)
 							availableHoroscopeLabel.setText("Hai ancora " + availableHoroscopes + " oroscopi a disposizione");
 						else
+						{
 							availableHoroscopeLabel.setText("Utente premium: numero illimitato di oroscopi");
+							premiumButton.setEnabled(false);
+						}
 						setVisible(true);
 						client.setSoTimeout(0);
 					}

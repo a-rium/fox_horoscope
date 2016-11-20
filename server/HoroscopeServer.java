@@ -81,19 +81,27 @@ public class HoroscopeServer extends UDPMessageSocket
 				}
 				else if(message.equals("data"))
 				{
-					URL generatorWebSite = new URL("http://www.polygen.org/it/grammatiche/rubriche/ita/oroscopo.grm");
-					BufferedReader in = new BufferedReader(new InputStreamReader(generatorWebSite.openStream()));
+					String sign = request.getParameter(1);
+					String[] date = sign.split("/");
+					if(date.length == 3)
+					{
+						int day = Integer.parseInt(date[0]);
+						int month = Integer.parseInt(date[1]);
+						sign = dateToSign(day, month);
+					}
+					String url = "http://www.grazia.it/oroscopo/oroscopo-del-giorno/";
+					URL sourceWebSite = new URL(url + sign.toLowerCase());
+					BufferedReader in = new BufferedReader(new InputStreamReader(sourceWebSite.openStream()));
 					String content = "";
 					String line;
 					while((line = in.readLine()) != null)
 						content += line;
-					String toFind = "<div class=\"generation\">";
+					String toFind = "<div id=\"single-article-body\" class=\"container\">";
 					int start = content.indexOf(toFind);
-					toFind = "<br>";
+					toFind = "<p>";
 					start = content.indexOf(toFind, start) + toFind.length();
-					start = content.indexOf(toFind, start) + toFind.length();
-					toFind = "</div>";
-					int end = content.indexOf(toFind, start) + toFind.length();
+					toFind = "</p>";
+					int end = content.indexOf(toFind, start);
 					System.out.println("Paragraph length: " + (end - start));
 					String horoscopeParagraph = "<html>" + content.substring(start, end) + "</html>";
 					sendMessage(horoscopeParagraph, packet.getAddress().getHostAddress(), packet.getPort());
@@ -126,5 +134,34 @@ public class HoroscopeServer extends UDPMessageSocket
 			out.close();
 		}
 		catch(IOException i) {}
+	}
+
+	public String dateToSign(int day, int month)
+	{
+		if((month == 3 && day > 20) || (month == 4 && day < 21))
+			return "ariete";
+		else if((month == 4 && day > 20) || (month == 5 && day < 21))
+			return "toro";
+		else if((month == 5 && day > 20) || (month == 6 && day < 22))
+			return "gemelli";
+		else if((month == 6 && day > 21) || (month == 7 && day < 23))
+			return "cancro";
+		else if((month == 7 && day > 22) || (month == 8 && day < 24))
+			return "leone";
+		else if((month == 8 && day > 23) || (month == 9 && day < 23))
+			return "vergine";
+		else if((month == 9 && day > 22) || (month == 10 && day < 23))
+			return "bilancia";
+		else if((month == 10 && day > 22) || (month == 11 && day < 23))
+			return "scorpione";
+		else if((month == 11 && day > 22) || (month == 12 && day < 22))
+			return "sagittario";
+		else if((month == 12 && day > 21) || (month == 1 && day < 21))
+			return "capricorno";
+		else if((month == 1 && day > 20) || (month == 2 && day < 20))
+			return "acquario";
+		else if((month == 2 && day > 19) || (month == 3 && day < 21))
+			return "pesci";	
+		return "unknown";
 	}
 }
